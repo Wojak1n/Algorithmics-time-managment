@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher Teacher?
+  student Student?
+
+  @@map("users")
+}
+
+model Teacher {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unavailableTimes Json?    // Store as JSON array of time slots
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  skills  TeacherSkill[]
+  courses Course[]
+
+  @@map("teachers")
+}
+
+model Student {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("students")
+}
+
+model Room {
+  id               String   @id @default(cuid())
+  name             String
+  capacity         Int
+  unavailableTimes Json?    // Store as JSON array of time slots
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  courses Course[]
+
+  @@map("rooms")
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  skills      Skill[]
+  courses     Course[]
+  groupSubjects GroupSubject[]
+
+  @@map("subjects")
+}
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teachers TeacherSkill[]
+
+  @@map("skills")
+}
+
+model TeacherSkill {
+  id        String   @id @default(cuid())
+  teacherId String
+  skillId   String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, skillId])
+  @@map("teacher_skills")
+}
+
+model Group {
+  id               String   @id @default(cuid())
+  name             String
+  size             Int
+  unavailableTimes Json?    // Store as JSON array of time slots
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  students  Student[]
+  subjects  GroupSubject[]
+  courses   Course[]
+
+  @@map("groups")
+}
+
+model GroupSubject {
+  id        String   @id @default(cuid())
+  groupId   String
+  subjectId String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, subjectId])
+  @@map("group_subjects")
+}
+
+model Course {
+  id             String   @id @default(cuid())
+  name           String
+  subjectId      String
+  teacherId      String
+  groupId        String
+  roomId         String?
+  weeklySessions Int
+  schedule       Json?    // Store schedule as JSON
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  subject Subject  @relation(fields: [subjectId], references: [id])
+  teacher Teacher  @relation(fields: [teacherId], references: [id])
+  group   Group    @relation(fields: [groupId], references: [id])
+  room    Room?    @relation(fields: [roomId], references: [id])
+
+  @@map("courses")
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
