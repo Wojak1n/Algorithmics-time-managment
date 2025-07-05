@@ -33,6 +33,10 @@ export default function Home() {
     scheduledClasses: 0,
     conflicts: 0
   });
+  const [preferences, setPreferences] = useState({
+    showWelcomeMessage: true,
+    compactView: false
+  });
 
   useEffect(() => {
     // Check for stored auth
@@ -42,6 +46,12 @@ export default function Home() {
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
       setToken(storedToken);
+
+      // Load preferences
+      const storedPreferences = localStorage.getItem('userPreferences');
+      if (storedPreferences) {
+        setPreferences({ ...preferences, ...JSON.parse(storedPreferences) });
+      }
     }
   }, []);
 
@@ -209,17 +219,19 @@ export default function Home() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Welcome back, {user.name}! Here's your timetable system overview.
-              </p>
+              {preferences.showWelcomeMessage && (
+                <p className="text-gray-600 dark:text-gray-300 mt-2">
+                  Welcome back, {user.name}! Here's your timetable system overview.
+                </p>
+              )}
             </div>
             <ThemeToggle />
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 ${preferences.compactView ? 'gap-4' : 'gap-6'}`}>
             <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-100 text-sm font-medium">Total Courses</p>
@@ -231,7 +243,7 @@ export default function Home() {
             </Card>
 
             <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-emerald-100 text-sm font-medium">Teachers</p>
@@ -243,7 +255,7 @@ export default function Home() {
             </Card>
 
             <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-orange-100 text-sm font-medium">Students</p>
@@ -255,7 +267,7 @@ export default function Home() {
             </Card>
 
             <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-              <CardContent className="p-6">
+              <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-purple-100 text-sm font-medium">Rooms</p>
@@ -394,7 +406,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       className="h-20 flex flex-col items-center justify-center space-y-2"
-                      onClick={() => router.push('/subjects')}
+                      onClick={() => router.push('/my-subjects')}
                     >
                       <BookOpen className="h-6 w-6" />
                       <span>My Subjects</span>

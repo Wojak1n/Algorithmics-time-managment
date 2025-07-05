@@ -33,7 +33,7 @@ export function verifyToken(token: string): JWTPayload | null {
 
 export async function getUserFromRequest(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '');
-  
+
   if (!token) {
     return null;
   }

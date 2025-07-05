@@ -106,9 +106,18 @@ export default function SchedulesPage() {
         setGroups(groupsData);
         
         // Auto-select current user's group if they're a student
-        if (user.role === 'STUDENT' && user.student?.group) {
+        if (user.role === 'STUDENT') {
           setScheduleType('group');
-          setSelectedId(user.student.group.id);
+          if (user.student?.group) {
+            setSelectedId(user.student.group.id);
+          } else {
+            // Student is not assigned to a group
+            toast({
+              title: 'No Group Assigned',
+              description: 'You are not currently assigned to any group. Please contact your administrator.',
+              variant: 'destructive',
+            });
+          }
         }
       }
       
@@ -275,9 +284,11 @@ export default function SchedulesPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                 <Clock className="mr-3 h-8 w-8 text-gray-900 dark:text-gray-100" />
-                Schedules & Timetables
+                {user.role === 'STUDENT' ? 'My Timetable' : 'Schedules & Timetables'}
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">View and manage class schedules</p>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
+                {user.role === 'STUDENT' ? 'View your class schedule' : 'View and manage class schedules'}
+              </p>
             </div>
             
             <div className="flex space-x-2">
@@ -296,64 +307,95 @@ export default function SchedulesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Schedule Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={scheduleType} onValueChange={(value: any) => {
-                  setScheduleType(value);
-                  setSelectedId('');
-                  setSchedule([]);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="teacher">
-                      <div className="flex items-center">
-                        <User className="mr-2 h-4 w-4" />
-                        Teacher Schedule
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="group">
-                      <div className="flex items-center">
-                        <Users className="mr-2 h-4 w-4" />
-                        Group Schedule
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="room">
-                      <div className="flex items-center">
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Room Schedule
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Select {scheduleType}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={selectedId} onValueChange={setSelectedId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Choose ${scheduleType}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getOptionsForType().map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.name}
+          {user.role !== 'STUDENT' && (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Schedule Type</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select value={scheduleType} onValueChange={(value: any) => {
+                    setScheduleType(value);
+                    setSelectedId('');
+                    setSchedule([]);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="teacher">
+                        <div className="flex items-center">
+                          <User className="mr-2 h-4 w-4" />
+                          Teacher Schedule
+                        </div>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-          </div>
+                      <SelectItem value="group">
+                        <div className="flex items-center">
+                          <Users className="mr-2 h-4 w-4" />
+                          Group Schedule
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="room">
+                        <div className="flex items-center">
+                          <BookOpen className="mr-2 h-4 w-4" />
+                          Room Schedule
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Select {scheduleType}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select value={selectedId} onValueChange={setSelectedId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Choose ${scheduleType}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getOptionsForType().map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {user.role === 'STUDENT' && (
+            <div className="mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center">
+                    <Users className="mr-2 h-4 w-4" />
+                    My Class Timetable
+                    {user.student?.group && (
+                      <Badge variant="outline" className="ml-2">
+                        {user.student.group.name}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {user.student?.group ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Viewing schedule for your group: <strong>{user.student.group.name}</strong>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      You are not currently assigned to any group. Please contact your administrator.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           <Card>
             <CardHeader>
@@ -365,7 +407,7 @@ export default function SchedulesPage() {
             <CardContent>
               {loading ? (
                 <div className="text-center py-8 text-gray-600 dark:text-gray-300">Loading schedule...</div>
-              ) : selectedId ? (
+              ) : (user.role === 'STUDENT' && user.student?.group) || selectedId ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -417,6 +459,10 @@ export default function SchedulesPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : user.role === 'STUDENT' ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  You need to be assigned to a group to view your timetable. Please contact your administrator.
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">

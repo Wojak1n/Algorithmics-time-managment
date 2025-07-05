@@ -64,6 +64,12 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       roles: ['ADMIN', 'TEACHER']
     },
     {
+      name: 'My Subjects',
+      href: '/my-subjects',
+      icon: BookOpen,
+      roles: ['STUDENT']
+    },
+    {
       name: 'Rooms',
       href: '/rooms',
       icon: MapPin,
