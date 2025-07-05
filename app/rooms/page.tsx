@@ -211,7 +211,7 @@ export default function RoomsPage() {
 
   const handleTimeSlotToggle = (day: string, time: string) => {
     const timeSlot = `${day}-${time}`;
-    setUnavailableTimes(prev => 
+    setUnavailableTimes((prev: string[]) =>
       prev.includes(timeSlot)
         ? prev.filter(slot => slot !== timeSlot)
         : [...prev, timeSlot]
