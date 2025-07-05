@@ -25,7 +25,7 @@ export default function DebugPage() {
       const response = await fetch(endpoint, { headers });
       const data = await response.json();
       
-      setResults(prev => ({
+      setResults((prev: any) => ({
         ...prev,
         [endpoint]: {
           status: response.status,
@@ -34,7 +34,7 @@ export default function DebugPage() {
         }
       }));
     } catch (error) {
-      setResults(prev => ({
+      setResults((prev: any) => ({
         ...prev,
         [endpoint]: {
           status: 'ERROR',
@@ -67,7 +67,7 @@ export default function DebugPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      setResults(prev => ({
+      setResults((prev: any) => ({
         ...prev,
         '/api/auth/login': {
           status: response.status,
@@ -76,7 +76,7 @@ export default function DebugPage() {
         }
       }));
     } catch (error) {
-      setResults(prev => ({
+      setResults((prev: any) => ({
         ...prev,
         '/api/auth/login': {
           status: 'ERROR',
