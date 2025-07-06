@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ThemeToggle } from '@/components/theme-toggle';
+
 import { Plus, Edit, Trash2, Users } from 'lucide-react';
 
 interface User {
@@ -218,8 +218,7 @@ export default function UsersPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">Manage system users and their roles</p>
             </div>
-            <ThemeToggle />
-            
+
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm}>
