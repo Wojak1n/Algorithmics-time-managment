@@ -63,31 +63,44 @@ export default function CoursesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-    
-    if (storedUser && storedToken) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      setToken(storedToken);
-      
-      if (!['ADMIN', 'TEACHER'].includes(userData.role)) {
+    try {
+      console.log('Initializing user data...');
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token');
+
+      if (storedUser && storedToken) {
+        const userData = JSON.parse(storedUser);
+        console.log('User data loaded:', userData);
+        setUser(userData);
+        setToken(storedToken);
+
+        if (!['ADMIN', 'TEACHER'].includes(userData.role)) {
+          router.push('/');
+          return;
+        }
+      } else {
+        console.log('No user data found, redirecting...');
         router.push('/');
         return;
       }
-    } else {
+    } catch (error) {
+      console.error('Error initializing user data:', error);
       router.push('/');
-      return;
     }
   }, [router]);
 
   useEffect(() => {
     if (user && token) {
-      fetchCourses();
-      fetchSubjects();
-      fetchTeachers();
-      fetchGroups();
-      fetchRooms();
+      console.log('Fetching data for user:', user);
+      try {
+        fetchCourses();
+        fetchSubjects();
+        fetchTeachers();
+        fetchGroups();
+        fetchRooms();
+      } catch (error) {
+        console.error('Error in data fetching useEffect:', error);
+      }
     }
   }, [user, token]);
 
@@ -311,15 +324,21 @@ export default function CoursesPage() {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      subjectId: '',
-      teacherId: '',
-      groupId: '',
-      roomId: '',
-      weeklySessions: '1'
-    });
-    setEditingCourse(null);
+    try {
+      console.log('Resetting form...');
+      setFormData({
+        name: '',
+        subjectId: '',
+        teacherId: '',
+        groupId: '',
+        roomId: '',
+        weeklySessions: '1'
+      });
+      setEditingCourse(null);
+      console.log('Form reset successfully');
+    } catch (error) {
+      console.error('Error in resetForm:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -331,23 +350,44 @@ export default function CoursesPage() {
   };
 
   const getTeachersBySubject = (subjectId: string) => {
-    if (!subjectId || !teachers || teachers.length === 0) {
+    try {
+      console.log('getTeachersBySubject called with:', subjectId);
+      console.log('Teachers array:', teachers);
+
+      if (!subjectId || !teachers || teachers.length === 0) {
+        console.log('Returning empty array - no subject or teachers');
+        return [];
+      }
+
+      const filteredTeachers = teachers.filter(teacher => {
+        if (!teacher || !teacher.skills || teacher.skills.length === 0) {
+          return false;
+        }
+        return teacher.skills.some((skill: any) =>
+          skill && skill.skill && skill.skill.subjectId === subjectId
+        );
+      });
+
+      console.log('Filtered teachers:', filteredTeachers);
+      return filteredTeachers;
+    } catch (error) {
+      console.error('Error in getTeachersBySubject:', error);
       return [];
     }
-
-    return teachers.filter(teacher => {
-      if (!teacher.skills || teacher.skills.length === 0) {
-        return false;
-      }
-      return teacher.skills.some((skill: any) =>
-        skill && skill.skill && skill.skill.subjectId === subjectId
-      );
-    });
   };
 
   if (!user || !['ADMIN', 'TEACHER'].includes(user.role)) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-300">Loading or unauthorized access...</p>
+        </div>
+      </div>
+    );
   }
+
+  // Add error boundary for the entire component
+  try {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -365,13 +405,30 @@ export default function CoursesPage() {
             </div>
             
             {user.role === 'ADMIN' && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Course
-                  </Button>
-                </DialogTrigger>
+              <>
+                <Button onClick={() => {
+                  console.log('Add Course button clicked');
+                  console.log('Current state:', { subjects, teachers, groups, rooms, loading });
+                  try {
+                    resetForm();
+                    setDialogOpen(true);
+                  } catch (error) {
+                    console.error('Error opening dialog:', error);
+                    alert('Error opening dialog: ' + error.message);
+                  }
+                }}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Course
+                </Button>
+
+                <Dialog open={dialogOpen} onOpenChange={(open) => {
+                  console.log('Dialog open change:', open);
+                  try {
+                    setDialogOpen(open);
+                  } catch (error) {
+                    console.error('Error in dialog onOpenChange:', error);
+                  }
+                }}>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>
@@ -386,7 +443,11 @@ export default function CoursesPage() {
                       </div>
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      {(() => {
+                        try {
+                          return (
+                            <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <Label htmlFor="name">Course Name</Label>
                       <Input
@@ -500,11 +561,26 @@ export default function CoursesPage() {
                       <Button type="submit">
                         {editingCourse ? 'Update' : 'Create'}
                       </Button>
+                            </div>
+                            </form>
+                          );
+                        } catch (error) {
+                          console.error('Error rendering form:', error);
+                          return (
+                            <div className="p-4 text-center">
+                              <p className="text-red-600">Error loading form. Please try again.</p>
+                              <Button onClick={() => window.location.reload()} className="mt-2">
+                                Reload Page
+                              </Button>
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
-                  </form>
                   )}
                 </DialogContent>
-              </Dialog>
+                </Dialog>
+              </>
             )}
           </div>
 
@@ -595,4 +671,20 @@ export default function CoursesPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('Error rendering CoursesPage:', error);
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading Courses Page</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            There was an error loading the courses page. Please check the console for details.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
 }
