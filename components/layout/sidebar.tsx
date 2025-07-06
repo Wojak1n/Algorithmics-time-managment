@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ThemeToggle } from '@/components/theme-toggle';
+
 import { LogoOnly } from '@/components/logo';
 import { 
   Calendar,
@@ -186,12 +186,8 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             </nav>
           </ScrollArea>
 
-          {/* Theme Toggle & Logout */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Theme</span>
-              <ThemeToggle />
-            </div>
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="ghost"
               className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
