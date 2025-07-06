@@ -124,56 +124,84 @@ export default function CoursesPage() {
   const fetchSubjects = async () => {
     try {
       const response = await fetch('/api/subjects', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       if (response.ok) {
         const data = await response.json();
-        setSubjects(data);
+        setSubjects(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch subjects:', response.status);
+        setSubjects([]);
       }
     } catch (error) {
       console.error('Error fetching subjects:', error);
+      setSubjects([]);
     }
   };
 
   const fetchTeachers = async () => {
     try {
       const response = await fetch('/api/teachers', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       if (response.ok) {
         const data = await response.json();
-        setTeachers(data);
+        setTeachers(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch teachers:', response.status);
+        setTeachers([]);
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
+      setTeachers([]);
     }
   };
 
   const fetchGroups = async () => {
     try {
       const response = await fetch('/api/groups', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       if (response.ok) {
         const data = await response.json();
-        setGroups(data);
+        setGroups(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch groups:', response.status);
+        setGroups([]);
       }
     } catch (error) {
       console.error('Error fetching groups:', error);
+      setGroups([]);
     }
   };
 
   const fetchRooms = async () => {
     try {
       const response = await fetch('/api/rooms', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
       if (response.ok) {
         const data = await response.json();
-        setRooms(data);
+        setRooms(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch rooms:', response.status);
+        setRooms([]);
       }
     } catch (error) {
       console.error('Error fetching rooms:', error);
+      setRooms([]);
     }
   };
 
@@ -303,9 +331,18 @@ export default function CoursesPage() {
   };
 
   const getTeachersBySubject = (subjectId: string) => {
-    return teachers.filter(teacher => 
-      teacher.skills.some((skill: any) => skill.skill.subjectId === subjectId)
-    );
+    if (!subjectId || !teachers || teachers.length === 0) {
+      return [];
+    }
+
+    return teachers.filter(teacher => {
+      if (!teacher.skills || teacher.skills.length === 0) {
+        return false;
+      }
+      return teacher.skills.some((skill: any) =>
+        skill && skill.skill && skill.skill.subjectId === subjectId
+      );
+    });
   };
 
   if (!user || !['ADMIN', 'TEACHER'].includes(user.role)) {
@@ -341,7 +378,15 @@ export default function CoursesPage() {
                       {editingCourse ? 'Edit Course' : 'Add New Course'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  {loading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                        <p>Loading form data...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <Label htmlFor="name">Course Name</Label>
                       <Input
@@ -361,11 +406,13 @@ export default function CoursesPage() {
                             <SelectValue placeholder="Select subject" />
                           </SelectTrigger>
                           <SelectContent>
-                            {subjects.map((subject) => (
+                            {subjects && subjects.length > 0 ? subjects.map((subject) => (
                               <SelectItem key={subject.id} value={subject.id}>
                                 {subject.code}: {subject.name}
                               </SelectItem>
-                            ))}
+                            )) : (
+                              <SelectItem value="" disabled>No subjects available</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -377,11 +424,17 @@ export default function CoursesPage() {
                             <SelectValue placeholder="Select teacher" />
                           </SelectTrigger>
                           <SelectContent>
-                            {getTeachersBySubject(formData.subjectId).map((teacher) => (
-                              <SelectItem key={teacher.id} value={teacher.id}>
-                                {teacher.user.name}
-                              </SelectItem>
-                            ))}
+                            {getTeachersBySubject(formData.subjectId).length > 0 ?
+                              getTeachersBySubject(formData.subjectId).map((teacher) => (
+                                <SelectItem key={teacher.id} value={teacher.id}>
+                                  {teacher.user?.name || 'Unknown Teacher'}
+                                </SelectItem>
+                              )) : (
+                                <SelectItem value="" disabled>
+                                  {formData.subjectId ? 'No teachers available for this subject' : 'Please select a subject first'}
+                                </SelectItem>
+                              )
+                            }
                           </SelectContent>
                         </Select>
                       </div>
@@ -395,11 +448,13 @@ export default function CoursesPage() {
                             <SelectValue placeholder="Select group" />
                           </SelectTrigger>
                           <SelectContent>
-                            {groups.map((group) => (
+                            {groups && groups.length > 0 ? groups.map((group) => (
                               <SelectItem key={group.id} value={group.id}>
-                                {group.name} ({group.students.length}/{group.size})
+                                {group.name} ({group.students?.length || 0}/{group.size})
                               </SelectItem>
-                            ))}
+                            )) : (
+                              <SelectItem value="" disabled>No groups available</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -412,11 +467,11 @@ export default function CoursesPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="">No Room</SelectItem>
-                            {rooms.map((room) => (
+                            {rooms && rooms.length > 0 ? rooms.map((room) => (
                               <SelectItem key={room.id} value={room.id}>
                                 {room.name} (Cap: {room.capacity})
                               </SelectItem>
-                            ))}
+                            )) : null}
                           </SelectContent>
                         </Select>
                       </div>
@@ -447,6 +502,7 @@ export default function CoursesPage() {
                       </Button>
                     </div>
                   </form>
+                  )}
                 </DialogContent>
               </Dialog>
             )}
