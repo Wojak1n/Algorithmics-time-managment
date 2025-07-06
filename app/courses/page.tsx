@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -221,7 +221,7 @@ export default function CoursesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.subjectId || !formData.teacherId || !formData.groupId || !formData.weeklySessions) {
+    if (!formData.name?.trim() || !formData.subjectId || !formData.teacherId || !formData.groupId || !formData.weeklySessions) {
       toast({
         title: 'Error',
         description: 'All fields except room are required',
@@ -434,6 +434,9 @@ export default function CoursesPage() {
                     <DialogTitle>
                       {editingCourse ? 'Edit Course' : 'Add New Course'}
                     </DialogTitle>
+                    <DialogDescription>
+                      {editingCourse ? 'Update the course details below.' : 'Fill in the details to create a new course.'}
+                    </DialogDescription>
                   </DialogHeader>
                   {loading ? (
                     <div className="flex items-center justify-center p-8">
@@ -462,7 +465,7 @@ export default function CoursesPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="subject">Subject</Label>
-                        <Select value={formData.subjectId} onValueChange={(value) => setFormData({ ...formData, subjectId: value, teacherId: '' })}>
+                        <Select value={formData.subjectId || undefined} onValueChange={(value) => setFormData({ ...formData, subjectId: value, teacherId: '' })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select subject" />
                           </SelectTrigger>
@@ -480,7 +483,7 @@ export default function CoursesPage() {
                       
                       <div>
                         <Label htmlFor="teacher">Teacher</Label>
-                        <Select value={formData.teacherId} onValueChange={(value) => setFormData({ ...formData, teacherId: value })}>
+                        <Select value={formData.teacherId || undefined} onValueChange={(value) => setFormData({ ...formData, teacherId: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select teacher" />
                           </SelectTrigger>
@@ -504,7 +507,7 @@ export default function CoursesPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="group">Group</Label>
-                        <Select value={formData.groupId} onValueChange={(value) => setFormData({ ...formData, groupId: value })}>
+                        <Select value={formData.groupId || undefined} onValueChange={(value) => setFormData({ ...formData, groupId: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select group" />
                           </SelectTrigger>
@@ -522,7 +525,7 @@ export default function CoursesPage() {
                       
                       <div>
                         <Label htmlFor="room">Room (Optional)</Label>
-                        <Select value={formData.roomId} onValueChange={(value) => setFormData({ ...formData, roomId: value })}>
+                        <Select value={formData.roomId || undefined} onValueChange={(value) => setFormData({ ...formData, roomId: value || '' })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select room" />
                           </SelectTrigger>
@@ -540,7 +543,7 @@ export default function CoursesPage() {
                     
                     <div>
                       <Label htmlFor="sessions">Weekly Sessions</Label>
-                      <Select value={formData.weeklySessions} onValueChange={(value) => setFormData({ ...formData, weeklySessions: value })}>
+                      <Select value={formData.weeklySessions || "1"} onValueChange={(value) => setFormData({ ...formData, weeklySessions: value })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
