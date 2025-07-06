@@ -166,3 +166,58 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getUserFromRequest(request);
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const teacherId = params.id;
+
+    // Check if teacher exists
+    const existingTeacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      include: {
+        courses: true
+      }
+    });
+
+    if (!existingTeacher) {
+      return NextResponse.json(
+        { error: 'Teacher not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if teacher has active courses
+    if (existingTeacher.courses.length > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete teacher with active courses. Please reassign or delete courses first.' },
+        { status: 400 }
+      );
+    }
+
+    // Delete teacher (this will also delete the associated user due to cascade)
+    await prisma.teacher.delete({
+      where: { id: teacherId }
+    });
+
+    return NextResponse.json({ message: 'Teacher deleted successfully' });
+
+  } catch (error) {
+    console.error('Delete teacher error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

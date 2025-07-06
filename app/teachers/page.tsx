@@ -207,11 +207,46 @@ export default function TeachersPage() {
 
   const handleTimeSlotToggle = (day: string, time: string) => {
     const timeSlot = `${day}-${time}`;
-    setUnavailableTimes(prev => 
+    setUnavailableTimes(prev =>
       prev.includes(timeSlot)
         ? prev.filter(slot => slot !== timeSlot)
         : [...prev, timeSlot]
     );
+  };
+
+  const handleDelete = async (teacherId: string) => {
+    if (!confirm('Are you sure you want to delete this teacher? This action cannot be undone.')) return;
+
+    try {
+      const response = await fetch(`/api/teachers/${teacherId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Teacher deleted successfully',
+        });
+        fetchTeachers();
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete teacher',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Network error while deleting teacher',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -280,13 +315,24 @@ export default function TeachersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(teacher)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(teacher)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {user.role === 'ADMIN' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(teacher.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
