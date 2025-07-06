@@ -12,7 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Settings, User, Lock, Bell, Palette, Globe, Clock, Eye, Shield, Download } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Settings, User, Lock, Bell, Palette } from 'lucide-react';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
@@ -28,20 +29,13 @@ export default function SettingsPage() {
     confirmPassword: ''
   });
   const [preferences, setPreferences] = useState({
-    language: 'en',
-    timeFormat: '12h',
-    dateFormat: 'MM/DD/YYYY',
     emailNotifications: true,
-    pushNotifications: false,
-    weekStartsOn: 'monday',
-    autoSave: true,
     compactView: false,
-    showWelcomeMessage: true,
-    enableSounds: true,
-    dataExportFormat: 'csv'
+    showWelcomeMessage: true
   });
   const { toast } = useToast();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -206,49 +200,13 @@ export default function SettingsPage() {
     });
   };
 
-  const exportData = () => {
-    const userData = {
-      profile: {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt
-      },
-      preferences: preferences,
-      exportedAt: new Date().toISOString()
-    };
 
-    const dataStr = preferences.dataExportFormat === 'json'
-      ? JSON.stringify(userData, null, 2)
-      : `Name,Email,Role,Created At,Exported At\n${user.name},${user.email},${user.role},${user.createdAt},${new Date().toISOString()}`;
-
-    const dataBlob = new Blob([dataStr], { type: preferences.dataExportFormat === 'json' ? 'application/json' : 'text/csv' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `user-data.${preferences.dataExportFormat}`;
-    link.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: 'Data Exported',
-      description: `Your data has been exported as ${preferences.dataExportFormat.toUpperCase()}`,
-    });
-  };
 
   const resetPreferences = () => {
     const defaultPreferences = {
-      language: 'en',
-      timeFormat: '12h',
-      dateFormat: 'MM/DD/YYYY',
       emailNotifications: true,
-      pushNotifications: false,
-      weekStartsOn: 'monday',
-      autoSave: true,
       compactView: false,
-      showWelcomeMessage: true,
-      enableSounds: true,
-      dataExportFormat: 'csv'
+      showWelcomeMessage: true
     };
 
     setPreferences(defaultPreferences);
@@ -286,7 +244,6 @@ export default function SettingsPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">Manage your account and preferences</p>
             </div>
-            <ThemeToggle />
           </div>
 
           <div className="space-y-6">
@@ -401,33 +358,43 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                  <div className="space-y-4">
                     <div>
                       <Label>Theme</Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Choose your preferred theme</p>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Use toggle above →</div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Language</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Select your preferred language</p>
+                    <div className="flex gap-3">
+                      <Button
+                        variant={theme === 'light' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setTheme('light')}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
+                        Light
+                      </Button>
+                      <Button
+                        variant={theme === 'dark' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setTheme('dark')}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-4 h-4 bg-gray-800 border border-gray-600 rounded"></div>
+                        Dark
+                      </Button>
+                      <Button
+                        variant={theme === 'system' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setTheme('system')}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-4 h-4 bg-gradient-to-r from-white to-gray-800 border border-gray-400 rounded"></div>
+                        System
+                      </Button>
                     </div>
-                    <Select value={preferences.language} onValueChange={(value) => updatePreference('language', value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Español</SelectItem>
-                        <SelectItem value="fr">Français</SelectItem>
-                        <SelectItem value="de">Deutsch</SelectItem>
-                        <SelectItem value="it">Italiano</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Current theme: <span className="font-medium capitalize">{theme}</span>
+                    </p>
                   </div>
 
                   <Separator />
@@ -459,82 +426,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Time & Date Preferences */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="mr-2 h-5 w-5" />
-                  Time & Date
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Time Format</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Choose 12-hour or 24-hour format</p>
-                    </div>
-                    <Select value={preferences.timeFormat} onValueChange={(value) => updatePreference('timeFormat', value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="12h">12 Hour</SelectItem>
-                        <SelectItem value="24h">24 Hour</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Date Format</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Choose your preferred date format</p>
-                    </div>
-                    <Select value={preferences.dateFormat} onValueChange={(value) => updatePreference('dateFormat', value)}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                        <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                        <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                        <SelectItem value="DD MMM YYYY">DD MMM YYYY</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Week Starts On</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">First day of the week in calendars</p>
-                    </div>
-                    <Select value={preferences.weekStartsOn} onValueChange={(value) => updatePreference('weekStartsOn', value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sunday">Sunday</SelectItem>
-                        <SelectItem value="monday">Monday</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Time Zone</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Your current time zone</p>
-                    </div>
-                    <Input value={Intl.DateTimeFormat().resolvedOptions().timeZone} disabled className="w-48" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Notification Preferences */}
             <Card>
@@ -556,133 +448,24 @@ export default function SettingsPage() {
                       onCheckedChange={(checked) => updatePreference('emailNotifications', checked)}
                     />
                   </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Receive browser push notifications</p>
-                    </div>
-                    <Switch
-                      checked={preferences.pushNotifications}
-                      onCheckedChange={(checked) => updatePreference('pushNotifications', checked)}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Sound Effects</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Play sounds for notifications and actions</p>
-                    </div>
-                    <Switch
-                      checked={preferences.enableSounds}
-                      onCheckedChange={(checked) => updatePreference('enableSounds', checked)}
-                    />
-                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Advanced Settings */}
+            {/* Reset Preferences */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Advanced Settings
-                </CardTitle>
+                <CardTitle>Reset Settings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Auto-Save</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Automatically save changes as you type</p>
-                    </div>
-                    <Switch
-                      checked={preferences.autoSave}
-                      onCheckedChange={(checked) => updatePreference('autoSave', checked)}
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Reset Preferences</Label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Reset all preferences to default values</p>
                   </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Data Export Format</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Preferred format for data exports</p>
-                    </div>
-                    <Select value={preferences.dataExportFormat} onValueChange={(value) => updatePreference('dataExportFormat', value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="csv">CSV</SelectItem>
-                        <SelectItem value="json">JSON</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Export My Data</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Download your profile and preferences data</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={exportData}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Export
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Reset Preferences</Label>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Reset all preferences to default values</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={resetPreferences}>
-                      Reset All
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Privacy & Security */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Eye className="mr-2 h-5 w-5" />
-                  Privacy & Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Data Privacy</h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Your data is stored locally and securely. We don't share your personal information with third parties.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">Security</h4>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Your account is protected with secure authentication. Remember to use a strong password.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">Session Management</h4>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      Your session will automatically expire after a period of inactivity for security.
-                    </p>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={resetPreferences}>
+                    Reset All
+                  </Button>
                 </div>
               </CardContent>
             </Card>

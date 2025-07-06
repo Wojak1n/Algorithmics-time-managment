@@ -186,8 +186,12 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             </nav>
           </ScrollArea>
 
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Theme Toggle & Logout */}
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Theme</span>
+              <ThemeToggle />
+            </div>
             <Button
               variant="ghost"
               className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
