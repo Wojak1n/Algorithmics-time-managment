@@ -221,7 +221,11 @@ export default function CoursesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name?.trim() || !formData.subjectId || !formData.teacherId || !formData.groupId || !formData.weeklySessions) {
+    if (!formData.name?.trim() ||
+        !formData.subjectId || formData.subjectId === 'no-subjects' ||
+        !formData.teacherId || formData.teacherId === 'no-teachers' ||
+        !formData.groupId || formData.groupId === 'no-groups' ||
+        !formData.weeklySessions) {
       toast({
         title: 'Error',
         description: 'All fields except room are required',
@@ -245,7 +249,7 @@ export default function CoursesPage() {
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           groupId: formData.groupId,
-          roomId: formData.roomId || null,
+          roomId: (formData.roomId && formData.roomId !== 'no-room') ? formData.roomId : null,
           weeklySessions: parseInt(formData.weeklySessions)
         }),
       });
@@ -282,7 +286,7 @@ export default function CoursesPage() {
       subjectId: course.subject.id,
       teacherId: course.teacher.id,
       groupId: course.group.id,
-      roomId: course.room?.id || '',
+      roomId: course.room?.id || 'no-room',
       weeklySessions: course.weeklySessions.toString()
     });
     setDialogOpen(true);
@@ -331,7 +335,7 @@ export default function CoursesPage() {
         subjectId: '',
         teacherId: '',
         groupId: '',
-        roomId: '',
+        roomId: 'no-room',
         weeklySessions: '1'
       });
       setEditingCourse(null);
@@ -475,7 +479,7 @@ export default function CoursesPage() {
                                 {subject.code}: {subject.name}
                               </SelectItem>
                             )) : (
-                              <SelectItem value="" disabled>No subjects available</SelectItem>
+                              <SelectItem value="no-subjects" disabled>No subjects available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -494,7 +498,7 @@ export default function CoursesPage() {
                                   {teacher.user?.name || 'Unknown Teacher'}
                                 </SelectItem>
                               )) : (
-                                <SelectItem value="" disabled>
+                                <SelectItem value="no-teachers" disabled>
                                   {formData.subjectId ? 'No teachers available for this subject' : 'Please select a subject first'}
                                 </SelectItem>
                               )
@@ -517,7 +521,7 @@ export default function CoursesPage() {
                                 {group.name} ({group.students?.length || 0}/{group.size})
                               </SelectItem>
                             )) : (
-                              <SelectItem value="" disabled>No groups available</SelectItem>
+                              <SelectItem value="no-groups" disabled>No groups available</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -525,12 +529,12 @@ export default function CoursesPage() {
                       
                       <div>
                         <Label htmlFor="room">Room (Optional)</Label>
-                        <Select value={formData.roomId || undefined} onValueChange={(value) => setFormData({ ...formData, roomId: value || '' })}>
+                        <Select value={formData.roomId || 'no-room'} onValueChange={(value) => setFormData({ ...formData, roomId: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select room" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">No Room</SelectItem>
+                            <SelectItem value="no-room">No Room</SelectItem>
                             {rooms && rooms.length > 0 ? rooms.map((room) => (
                               <SelectItem key={room.id} value={room.id}>
                                 {room.name} (Cap: {room.capacity})
