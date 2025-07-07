@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('no-group');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -123,7 +123,7 @@ export default function StudentsPage() {
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
-    setSelectedGroupId(student.groupId || '');
+    setSelectedGroupId(student.groupId || 'no-group');
     setDialogOpen(true);
   };
 
@@ -140,7 +140,7 @@ export default function StudentsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          groupId: selectedGroupId || null
+          groupId: (selectedGroupId && selectedGroupId !== 'no-group') ? selectedGroupId : null
         }),
       });
 
@@ -171,7 +171,7 @@ export default function StudentsPage() {
 
   const resetForm = () => {
     setEditingStudent(null);
-    setSelectedGroupId('');
+    setSelectedGroupId('no-group');
   };
 
   const handleLogout = () => {
@@ -300,6 +300,9 @@ export default function StudentsPage() {
                 <DialogTitle>
                   Edit Student: {editingStudent?.user.name}
                 </DialogTitle>
+                <DialogDescription>
+                  Assign or change the group for this student.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -309,7 +312,7 @@ export default function StudentsPage() {
                       <SelectValue placeholder="Select a group" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Group</SelectItem>
+                      <SelectItem value="no-group">No Group</SelectItem>
                       {groups.map((group) => {
                         const currentStudents = students.filter(s => s.groupId === group.id).length;
                         const isFull = currentStudents >= group.size && selectedGroupId !== group.id;
