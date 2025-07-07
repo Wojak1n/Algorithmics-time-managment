@@ -7,15 +7,13 @@ interface AnimatedCounterProps {
   duration?: number;
   delay?: number;
   className?: string;
-  onAnimationComplete?: () => void;
 }
 
 export function AnimatedCounter({
   value,
   duration = 2000,
   delay = 0,
-  className = "",
-  onAnimationComplete
+  className = ""
 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -47,8 +45,6 @@ export function AnimatedCounter({
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate);
-      } else if (onAnimationComplete) {
-        onAnimationComplete();
       }
     };
 
@@ -74,15 +70,13 @@ interface AnimatedPercentageProps {
   duration?: number;
   delay?: number;
   className?: string;
-  onAnimationComplete?: () => void;
 }
 
 export function AnimatedPercentage({
   value,
   duration = 2000,
   delay = 0,
-  className = "",
-  onAnimationComplete
+  className = ""
 }: AnimatedPercentageProps) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -112,8 +106,6 @@ export function AnimatedPercentage({
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate);
-      } else if (onAnimationComplete) {
-        onAnimationComplete();
       }
     };
 
