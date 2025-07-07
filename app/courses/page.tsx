@@ -283,9 +283,9 @@ export default function CoursesPage() {
     setEditingCourse(course);
     setFormData({
       name: course.name,
-      subjectId: course.subject.id,
-      teacherId: course.teacher.id,
-      groupId: course.group.id,
+      subjectId: course.subject?.id || 'no-subjects',
+      teacherId: course.teacher?.id || 'no-teachers',
+      groupId: course.group?.id || 'no-groups',
       roomId: course.room?.id || 'no-room',
       weeklySessions: course.weeklySessions.toString()
     });
@@ -332,9 +332,9 @@ export default function CoursesPage() {
       console.log('Resetting form...');
       setFormData({
         name: '',
-        subjectId: '',
-        teacherId: '',
-        groupId: '',
+        subjectId: 'no-subjects',
+        teacherId: 'no-teachers',
+        groupId: 'no-groups',
         roomId: 'no-room',
         weeklySessions: '1'
       });
@@ -469,7 +469,7 @@ export default function CoursesPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="subject">Subject</Label>
-                        <Select value={formData.subjectId || undefined} onValueChange={(value) => setFormData({ ...formData, subjectId: value, teacherId: '' })}>
+                        <Select value={formData.subjectId || 'no-subjects'} onValueChange={(value) => setFormData({ ...formData, subjectId: value, teacherId: '' })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select subject" />
                           </SelectTrigger>
@@ -487,7 +487,7 @@ export default function CoursesPage() {
                       
                       <div>
                         <Label htmlFor="teacher">Teacher</Label>
-                        <Select value={formData.teacherId || undefined} onValueChange={(value) => setFormData({ ...formData, teacherId: value })}>
+                        <Select value={formData.teacherId || 'no-teachers'} onValueChange={(value) => setFormData({ ...formData, teacherId: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select teacher" />
                           </SelectTrigger>
@@ -511,7 +511,7 @@ export default function CoursesPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="group">Group</Label>
-                        <Select value={formData.groupId || undefined} onValueChange={(value) => setFormData({ ...formData, groupId: value })}>
+                        <Select value={formData.groupId || 'no-groups'} onValueChange={(value) => setFormData({ ...formData, groupId: value })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select group" />
                           </SelectTrigger>

@@ -307,7 +307,7 @@ export default function StudentsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="group">Group Assignment</Label>
-                  <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                  <Select value={selectedGroupId || 'no-group'} onValueChange={setSelectedGroupId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a group" />
                     </SelectTrigger>
