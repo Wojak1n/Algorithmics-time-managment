@@ -69,33 +69,60 @@ export default function Home() {
         'Content-Type': 'application/json',
       };
 
-      const [coursesRes, teachersRes, groupsRes, roomsRes] = await Promise.all([
+      const [coursesRes, teachersRes, studentsRes, roomsRes] = await Promise.all([
         fetch('/api/courses', { headers }),
         fetch('/api/teachers', { headers }),
-        fetch('/api/groups', { headers }),
+        fetch('/api/students', { headers }),
         fetch('/api/rooms', { headers })
       ]);
 
-      if (coursesRes.ok && teachersRes.ok && groupsRes.ok && roomsRes.ok) {
-        const [courses, teachers, groups, rooms] = await Promise.all([
-          coursesRes.json(),
-          teachersRes.json(),
-          groupsRes.json(),
-          roomsRes.json()
-        ]);
+      // Handle each response individually to avoid all-or-nothing failure
+      let courses = [];
+      let teachers = [];
+      let students = [];
+      let rooms = [];
 
-        const totalStudents = groups.reduce((sum: number, group: any) => sum + group.students.length, 0);
-        const scheduledClasses = courses.filter((course: any) => course.schedule).length;
-
-        setStats({
-          totalCourses: courses.length,
-          totalTeachers: teachers.length,
-          totalStudents,
-          totalRooms: rooms.length,
-          scheduledClasses,
-          conflicts: 0 // This would come from the scheduling algorithm
-        });
+      if (coursesRes.ok) {
+        courses = await coursesRes.json();
+      } else {
+        console.error('Courses API failed:', coursesRes.status);
       }
+
+      if (teachersRes.ok) {
+        teachers = await teachersRes.json();
+      } else {
+        console.error('Teachers API failed:', teachersRes.status);
+      }
+
+      if (studentsRes.ok) {
+        students = await studentsRes.json();
+      } else {
+        console.error('Students API failed:', studentsRes.status);
+      }
+
+      if (roomsRes.ok) {
+        rooms = await roomsRes.json();
+      } else {
+        console.error('Rooms API failed:', roomsRes.status);
+      }
+
+      const scheduledClasses = courses.filter((course: any) => course.schedule).length;
+
+      console.log('Dashboard stats:', {
+        courses: courses.length,
+        teachers: teachers.length,
+        students: students.length,
+        rooms: rooms.length
+      });
+
+      setStats({
+        totalCourses: courses.length,
+        totalTeachers: teachers.length,
+        totalStudents: students.length,
+        totalRooms: rooms.length,
+        scheduledClasses,
+        conflicts: 0 // This would come from the scheduling algorithm
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
