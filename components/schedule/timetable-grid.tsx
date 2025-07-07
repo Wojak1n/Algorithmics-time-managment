@@ -126,7 +126,7 @@ export function TimetableGrid({ scheduleItems, title, viewType }: TimetableGridP
           <div className="p-2 font-medium text-center border rounded bg-muted">
             Time
           </div>
-          {days.slice(0, 7).map((day, dayIndex) => (
+          {days.map((day, dayIndex) => (
             <div key={day} className="p-2 font-medium text-center border rounded bg-muted">
               {day}
             </div>
@@ -138,7 +138,7 @@ export function TimetableGrid({ scheduleItems, title, viewType }: TimetableGridP
               <div key={`time-${hour}`} className="p-2 text-center border rounded bg-muted/50 text-sm font-medium">
                 {hour}:00
               </div>
-              {days.slice(0, 7).map((_, dayIndex) => {
+              {days.map((_, dayIndex) => {
                 const item = getScheduleItem(dayIndex, hour);
                 
                 return (

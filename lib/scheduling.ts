@@ -24,7 +24,7 @@ export class TimetableScheduler {
   private constraints: SchedulingConstraints;
   private schedule: ScheduleItem[] = [];
   private workingHours = { start: 8, end: 18 }; // 8 AM to 6 PM
-  private workingDays = [0, 1, 2, 3, 4]; // Monday to Friday
+  private workingDays = [0, 1, 2, 3, 4, 5, 6]; // Monday to Sunday
 
   constructor(constraints: SchedulingConstraints) {
     this.constraints = constraints;

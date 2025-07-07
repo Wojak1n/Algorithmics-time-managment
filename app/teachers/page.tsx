@@ -65,7 +65,7 @@ export default function TeachersPage() {
     '16:00-17:00', '17:00-18:00'
   ];
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -384,7 +384,7 @@ export default function TeachersPage() {
                     Unavailable Times
                   </Label>
                   <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="grid grid-cols-6 gap-2">
+                    <div className="grid grid-cols-8 gap-2">
                       <div></div>
                       {days.map((day) => (
                         <div key={day} className="text-center font-medium text-sm text-gray-900 dark:text-gray-100">

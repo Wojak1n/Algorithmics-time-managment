@@ -54,7 +54,7 @@ export default function SchedulesPage() {
     '16:00-17:00', '17:00-18:00'
   ];
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00',
       '16:00-17:00', '17:00-18:00'
     ];
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     // Get all courses
     const courses = await prisma.course.findMany({
