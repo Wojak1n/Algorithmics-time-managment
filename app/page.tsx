@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { SimpleThemeToggle, ThemeToggle } from '@/components/theme-toggle';
 import { LogoIcon } from '@/components/logo';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Calendar,
   Users,
   BookOpen,
@@ -19,6 +19,7 @@ import {
   Activity,
   CheckCircle
 } from 'lucide-react';
+import { AnimatedCounter, AnimatedPercentage } from '@/components/ui/animated-counter';
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -37,6 +38,20 @@ export default function Home() {
     showWelcomeMessage: true,
     compactView: false
   });
+  const [animatingCards, setAnimatingCards] = useState<Set<string>>(new Set());
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  const handleAnimationStart = (cardId: string) => {
+    setAnimatingCards(prev => new Set(prev).add(cardId));
+  };
+
+  const handleAnimationComplete = (cardId: string) => {
+    setAnimatingCards(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(cardId);
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     // Check for stored auth
@@ -123,6 +138,19 @@ export default function Home() {
         scheduledClasses,
         conflicts: 0 // This would come from the scheduling algorithm
       });
+
+      setStatsLoaded(true);
+
+      // Start animations for all cards
+      setTimeout(() => {
+        handleAnimationStart('courses');
+        handleAnimationStart('teachers');
+        handleAnimationStart('students');
+        handleAnimationStart('rooms');
+        handleAnimationStart('scheduled');
+        handleAnimationStart('conflicts');
+        handleAnimationStart('efficiency');
+      }, 100);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -257,50 +285,90 @@ export default function Home() {
 
           {/* Stats Grid */}
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 ${preferences.compactView ? 'gap-4' : 'gap-6'}`}>
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <Card className={`bg-gradient-to-r from-blue-500 to-blue-600 text-white transition-all duration-300 ${
+              animatingCards.has('courses') ? 'ring-2 ring-blue-300 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-100 text-sm font-medium">Total Courses</p>
-                    <p className="text-2xl font-bold">{stats.totalCourses}</p>
+                    <p className="text-2xl font-bold">
+                      <AnimatedCounter
+                        value={stats.totalCourses}
+                        delay={100}
+                        onAnimationComplete={() => handleAnimationComplete('courses')}
+                      />
+                    </p>
                   </div>
-                  <BookOpen className="h-8 w-8 text-blue-200" />
+                  <BookOpen className={`h-8 w-8 text-blue-200 transition-transform duration-300 ${
+                    animatingCards.has('courses') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
+            <Card className={`bg-gradient-to-r from-emerald-500 to-emerald-600 text-white transition-all duration-300 ${
+              animatingCards.has('teachers') ? 'ring-2 ring-emerald-300 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-emerald-100 text-sm font-medium">Teachers</p>
-                    <p className="text-2xl font-bold">{stats.totalTeachers}</p>
+                    <p className="text-2xl font-bold">
+                      <AnimatedCounter
+                        value={stats.totalTeachers}
+                        delay={300}
+                        onAnimationComplete={() => handleAnimationComplete('teachers')}
+                      />
+                    </p>
                   </div>
-                  <Users className="h-8 w-8 text-emerald-200" />
+                  <Users className={`h-8 w-8 text-emerald-200 transition-transform duration-300 ${
+                    animatingCards.has('teachers') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <Card className={`bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all duration-300 ${
+              animatingCards.has('students') ? 'ring-2 ring-orange-300 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-orange-100 text-sm font-medium">Students</p>
-                    <p className="text-2xl font-bold">{stats.totalStudents}</p>
+                    <p className="text-2xl font-bold">
+                      <AnimatedCounter
+                        value={stats.totalStudents}
+                        delay={500}
+                        onAnimationComplete={() => handleAnimationComplete('students')}
+                      />
+                    </p>
                   </div>
-                  <Users className="h-8 w-8 text-orange-200" />
+                  <Users className={`h-8 w-8 text-orange-200 transition-transform duration-300 ${
+                    animatingCards.has('students') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <Card className={`bg-gradient-to-r from-purple-500 to-purple-600 text-white transition-all duration-300 ${
+              animatingCards.has('rooms') ? 'ring-2 ring-purple-300 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className={preferences.compactView ? "p-4" : "p-6"}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-purple-100 text-sm font-medium">Rooms</p>
-                    <p className="text-2xl font-bold">{stats.totalRooms}</p>
+                    <p className="text-2xl font-bold">
+                      <AnimatedCounter
+                        value={stats.totalRooms}
+                        delay={700}
+                        onAnimationComplete={() => handleAnimationComplete('rooms')}
+                      />
+                    </p>
                   </div>
-                  <MapPin className="h-8 w-8 text-purple-200" />
+                  <MapPin className={`h-8 w-8 text-purple-200 transition-transform duration-300 ${
+                    animatingCards.has('rooms') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
@@ -308,51 +376,82 @@ export default function Home() {
 
           {/* Additional Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <Card>
+            <Card className={`transition-all duration-300 ${
+              animatingCards.has('scheduled') ? 'ring-2 ring-blue-200 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Scheduled Classes</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.scheduledClasses}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <AnimatedCounter
+                        value={stats.scheduledClasses}
+                        delay={900}
+                        onAnimationComplete={() => handleAnimationComplete('scheduled')}
+                      />
+                    </p>
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                       <CheckCircle className="h-3 w-3 inline mr-1" />
-                      {Math.round((stats.scheduledClasses / Math.max(stats.totalCourses, 1)) * 100)}% Complete
+                      <AnimatedPercentage
+                        value={Math.round((stats.scheduledClasses / Math.max(stats.totalCourses, 1)) * 100)}
+                        delay={1200}
+                      /> Complete
                     </p>
                   </div>
-                  <Clock className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  <Clock className={`h-8 w-8 text-gray-400 dark:text-gray-500 transition-transform duration-300 ${
+                    animatingCards.has('scheduled') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={`transition-all duration-300 ${
+              animatingCards.has('conflicts') ? 'ring-2 ring-red-200 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">Schedule Conflicts</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.conflicts}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <AnimatedCounter
+                        value={stats.conflicts}
+                        delay={1100}
+                        onAnimationComplete={() => handleAnimationComplete('conflicts')}
+                      />
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Detected in current schedule
                     </p>
                   </div>
-                  <Activity className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  <Activity className={`h-8 w-8 text-gray-400 dark:text-gray-500 transition-transform duration-300 ${
+                    animatingCards.has('conflicts') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className={`transition-all duration-300 ${
+              animatingCards.has('efficiency') ? 'ring-2 ring-green-200 ring-opacity-50 shadow-lg scale-105' : ''
+            }`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">System Efficiency</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.totalCourses > 0 ? Math.round(((stats.totalCourses - stats.conflicts) / stats.totalCourses) * 100) : 100}%
+                      <AnimatedPercentage
+                        value={stats.totalCourses > 0 ? Math.round(((stats.totalCourses - stats.conflicts) / stats.totalCourses) * 100) : 100}
+                        delay={1300}
+                        onAnimationComplete={() => handleAnimationComplete('efficiency')}
+                      />
                     </p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                       <TrendingUp className="h-3 w-3 inline mr-1" />
                       Optimized scheduling
                     </p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  <TrendingUp className={`h-8 w-8 text-gray-400 dark:text-gray-500 transition-transform duration-300 ${
+                    animatingCards.has('efficiency') ? 'scale-110' : ''
+                  }`} />
                 </div>
               </CardContent>
             </Card>
