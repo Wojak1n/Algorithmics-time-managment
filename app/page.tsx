@@ -205,7 +205,7 @@ export default function Home() {
                 <LogoIcon size={50} />
               </div>
               <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">
-                Automated Time Management
+                algorithmics Time Management
               </h1>
               <p className="text-purple-100 text-sm">
                 Smart scheduling for modern education

@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Automated Time Management',
+  title: 'algorithmics Time Management',
   description: 'Complete web-based timetable scheduling system with advanced algorithms',
   icons: {
     icon: [
