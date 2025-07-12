@@ -293,7 +293,7 @@ export default function TeachersPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Skills</TableHead>
                       <TableHead>Courses</TableHead>
-                      <TableHead>Actions</TableHead>
+                      {user.role === 'ADMIN' && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -315,9 +315,9 @@ export default function TeachersPage() {
                             {teacher.courses.length} courses
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            {user.role === 'ADMIN' && (
+                        {user.role === 'ADMIN' && (
+                          <TableCell>
+                            <div className="flex space-x-2">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -325,8 +325,6 @@ export default function TeachersPage() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                            )}
-                            {user.role === 'ADMIN' && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -334,9 +332,9 @@ export default function TeachersPage() {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
