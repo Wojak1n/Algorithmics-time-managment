@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Calendar, RefreshCw, Download, Users, User, BookOpen } from 'lucide-react';
+import { Clock, Calendar, RefreshCw, Download, Users, User, BookOpen, CalendarPlus, Save } from 'lucide-react';
 
 interface ScheduleSlot {
   day: string;
@@ -45,6 +47,14 @@ export default function SchedulesPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+
+  // Manual scheduling states
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [scheduleSlots, setScheduleSlots] = useState<{day: string; time: string}[]>([]);
+  const [saving, setSaving] = useState(false);
+
   const { toast } = useToast();
   const router = useRouter();
 
@@ -270,6 +280,122 @@ export default function SchedulesPage() {
     }
   };
 
+  // Manual scheduling functions
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/courses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const handleCourseSelect = (courseId: string) => {
+    setSelectedCourse(courseId);
+    const course = courses.find(c => c.id === courseId);
+    if (course) {
+      if (course.schedule && course.schedule.length > 0) {
+        setScheduleSlots(course.schedule);
+      } else {
+        const emptySlots = Array(course.weeklySessions).fill(null).map(() => ({
+          day: '',
+          time: ''
+        }));
+        setScheduleSlots(emptySlots);
+      }
+    }
+  };
+
+  const updateScheduleSlot = (index: number, field: 'day' | 'time', value: string) => {
+    const newSlots = [...scheduleSlots];
+    newSlots[index] = { ...newSlots[index], [field]: value };
+    setScheduleSlots(newSlots);
+  };
+
+  const addScheduleSlot = () => {
+    setScheduleSlots([...scheduleSlots, { day: '', time: '' }]);
+  };
+
+  const removeScheduleSlot = (index: number) => {
+    const newSlots = scheduleSlots.filter((_, i) => i !== index);
+    setScheduleSlots(newSlots);
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!selectedCourse) {
+      toast({
+        title: 'Error',
+        description: 'Please select a course first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const invalidSlots = scheduleSlots.some(slot => !slot.day || !slot.time);
+    if (invalidSlots) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all day and time slots',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/courses/${selectedCourse}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          schedule: scheduleSlots
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Schedule saved successfully',
+        });
+        setManualDialogOpen(false);
+        if (selectedId) {
+          fetchSchedule();
+        }
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to save schedule',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Network error while saving schedule',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openManualScheduleDialog = () => {
+    fetchCourses();
+    setManualDialogOpen(true);
+  };
+
   if (!user) {
     return null;
   }
@@ -293,10 +419,16 @@ export default function SchedulesPage() {
             
             <div className="flex space-x-2">
               {user.role === 'ADMIN' && (
-                <Button onClick={generateSchedule} disabled={generating}>
-                  <RefreshCw className={`mr-2 h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
-                  {generating ? 'Generating...' : 'Generate Schedule'}
-                </Button>
+                <>
+                  <Button onClick={generateSchedule} disabled={generating}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+                    {generating ? 'Generating...' : 'Generate Schedule'}
+                  </Button>
+                  <Button variant="outline" onClick={openManualScheduleDialog}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Manual Schedule
+                  </Button>
+                </>
               )}
               {schedule.length > 0 && (
                 <Button variant="outline" onClick={exportSchedule}>
@@ -473,6 +605,137 @@ export default function SchedulesPage() {
           </Card>
         </div>
       </div>
+
+      {/* Manual Schedule Dialog */}
+      <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manual Schedule Management</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Course Selection */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Course</Label>
+                <Select value={selectedCourse} onValueChange={handleCourseSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a course to schedule" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.name} - {course.subject.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedCourse && courses.find(c => c.id === selectedCourse) && (
+                <div className="space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100">Course Details</h3>
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="h-4 w-4 text-gray-500" />
+                      <span>{courses.find(c => c.id === selectedCourse)?.subject.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <span>{courses.find(c => c.id === selectedCourse)?.teacher.user.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <span>{courses.find(c => c.id === selectedCourse)?.group.name}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span>{courses.find(c => c.id === selectedCourse)?.weeklySessions} sessions per week</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Schedule Configuration */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">Schedule Time Slots</h3>
+              {selectedCourse ? (
+                <>
+                  {scheduleSlots.map((slot, index) => (
+                    <div key={index} className="flex items-center space-x-2 p-3 border rounded-md">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Day</Label>
+                          <Select
+                            value={slot.day}
+                            onValueChange={(value) => updateScheduleSlot(index, 'day', value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {days.map((day) => (
+                                <SelectItem key={day} value={day}>{day}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Time</Label>
+                          <Select
+                            value={slot.time}
+                            onValueChange={(value) => updateScheduleSlot(index, 'time', value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Time" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {timeSlots.map((time) => (
+                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeScheduleSlot(index)}
+                        className="h-8 w-8 p-0"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={addScheduleSlot}
+                      className="flex-1"
+                    >
+                      Add Time Slot
+                    </Button>
+                    <Button
+                      onClick={handleSaveSchedule}
+                      disabled={saving}
+                      className="flex-1"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? 'Saving...' : 'Save Schedule'}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  Select a course to configure its schedule
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
