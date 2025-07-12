@@ -142,6 +142,7 @@ export default function TeachersPage() {
   };
 
   const handleEdit = (teacher: Teacher) => {
+    if (user?.role !== 'ADMIN') return; // Only ADMIN can edit
     setEditingTeacher(teacher);
     setSelectedSkills(teacher.skills.map(ts => ts.skill.id));
     setUnavailableTimes(teacher.unavailableTimes || []);
@@ -316,13 +317,15 @@ export default function TeachersPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(teacher)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            {user.role === 'ADMIN' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(teacher)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                             {user.role === 'ADMIN' && (
                               <Button
                                 size="sm"
@@ -343,84 +346,87 @@ export default function TeachersPage() {
           </Card>
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  Edit Teacher: {editingTeacher?.user.name}
-                </DialogTitle>
-                <DialogDescription>
-                  Update the teacher's skills and availability schedule.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <Label className="text-base font-semibold">Skills</Label>
-                  <div className="mt-2 space-y-4">
-                    {subjects.map((subject) => (
-                      <div key={subject.id} className="border rounded-lg p-4">
-                        <h4 className="font-medium mb-2">{subject.name} ({subject.code})</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {subject.skills.map((skill) => (
-                            <div key={skill.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={skill.id}
-                                checked={selectedSkills.includes(skill.id)}
-                                onCheckedChange={() => handleSkillToggle(skill.id)}
-                              />
-                              <Label htmlFor={skill.id} className="text-sm">
-                                {skill.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-base font-semibold flex items-center">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Unavailable Times
-                  </Label>
-                  <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="grid grid-cols-8 gap-2">
-                      <div></div>
-                      {days.map((day) => (
-                        <div key={day} className="text-center font-medium text-sm text-gray-900 dark:text-gray-100">
-                          {day.slice(0, 3)}
-                        </div>
-                      ))}
-                      {timeSlots.map((time) => (
-                        <div key={time} className="contents">
-                          <div className="text-sm font-medium py-1 text-gray-900 dark:text-gray-100">{time}</div>
-                          {days.map((day) => {
-                            const timeSlot = `${day}-${time}`;
-                            return (
-                              <div key={timeSlot} className="flex justify-center">
+            {/* Only show dialog if editingTeacher and user is ADMIN */}
+            {user.role === 'ADMIN' && editingTeacher && (
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    Edit Teacher: {editingTeacher?.user.name}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Update the teacher's skills and availability schedule.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold">Skills</Label>
+                    <div className="mt-2 space-y-4">
+                      {subjects.map((subject) => (
+                        <div key={subject.id} className="border rounded-lg p-4">
+                          <h4 className="font-medium mb-2">{subject.name} ({subject.code})</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {subject.skills.map((skill) => (
+                              <div key={skill.id} className="flex items-center space-x-2">
                                 <Checkbox
-                                  checked={unavailableTimes.includes(timeSlot)}
-                                  onCheckedChange={() => handleTimeSlotToggle(day, time)}
+                                  id={skill.id}
+                                  checked={selectedSkills.includes(skill.id)}
+                                  onCheckedChange={() => handleSkillToggle(skill.id)}
                                 />
+                                <Label htmlFor={skill.id} className="text-sm">
+                                  {skill.name}
+                                </Label>
                               </div>
-                            );
-                          })}
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Update Teacher
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
+                  <div>
+                    <Label className="text-base font-semibold flex items-center">
+                      <Clock className="mr-2 h-4 w-4" />
+                      Unavailable Times
+                    </Label>
+                    <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <div className="grid grid-cols-8 gap-2">
+                        <div></div>
+                        {days.map((day) => (
+                          <div key={day} className="text-center font-medium text-sm text-gray-900 dark:text-gray-100">
+                            {day.slice(0, 3)}
+                          </div>
+                        ))}
+                        {timeSlots.map((time) => (
+                          <div key={time} className="contents">
+                            <div className="text-sm font-medium py-1 text-gray-900 dark:text-gray-100">{time}</div>
+                            {days.map((day) => {
+                              const timeSlot = `${day}-${time}`;
+                              return (
+                                <div key={timeSlot} className="flex justify-center">
+                                  <Checkbox
+                                    checked={unavailableTimes.includes(timeSlot)}
+                                    onCheckedChange={() => handleTimeSlotToggle(day, time)}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      Update Teacher
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            )}
           </Dialog>
         </div>
       </div>
