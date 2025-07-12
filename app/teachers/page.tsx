@@ -89,10 +89,7 @@ export default function TeachersPage() {
   useEffect(() => {
     if (user && token) {
       fetchTeachers();
-      // Only fetch subjects for admins who can edit
-      if (user.role === 'ADMIN') {
-        fetchSubjects();
-      }
+      fetchSubjects();
     }
   }, [user, token]);
 
@@ -107,15 +104,8 @@ export default function TeachersPage() {
 
       if (response.ok) {
         const data = await response.json();
-
-        // If user is a teacher, only show their own information
-        if (user.role === 'TEACHER') {
-          const currentTeacher = data.find((teacher: Teacher) => teacher.userId === user.id);
-          setTeachers(currentTeacher ? [currentTeacher] : []);
-        } else {
-          // Admin can see all teachers
-          setTeachers(data);
-        }
+        // Both teachers and admins can see all teachers
+        setTeachers(data);
       } else {
         toast({
           title: 'Error',
@@ -311,12 +301,12 @@ export default function TeachersPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
                 <UserCheck className="mr-3 h-8 w-8 text-gray-900 dark:text-gray-100" />
-                {user.role === 'ADMIN' ? 'Teachers Management' : 'My Profile'}
+                Teachers
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">
                 {user.role === 'ADMIN'
                   ? 'Manage teacher skills and availability'
-                  : 'View your skills and course assignments'
+                  : 'View teacher information and course assignments'
                 }
               </p>
             </div>
@@ -324,79 +314,12 @@ export default function TeachersPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>
-                {user.role === 'ADMIN' ? 'All Teachers' : 'My Information'}
-              </CardTitle>
+              <CardTitle>All Teachers</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-4 text-gray-600 dark:text-gray-300">Loading...</div>
-              ) : user.role === 'TEACHER' && teachers.length > 0 ? (
-                // Enhanced profile view for teachers
-                <div className="space-y-6">
-                  {teachers.map((teacher) => (
-                    <div key={teacher.id} className="space-y-4">
-                      {/* Basic Information */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</Label>
-                          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                            {teacher.user.name}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</Label>
-                          <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                            {teacher.user.email}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Skills Section */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">My Skills</Label>
-                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
-                          {teacher.skills.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {teacher.skills.map((ts) => (
-                                <Badge key={ts.id} variant="secondary" className="text-sm">
-                                  {ts.skill.subject.code}: {ts.skill.name}
-                                </Badge>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 dark:text-gray-400">No skills assigned yet</p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Courses Section */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">My Courses</Label>
-                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
-                          <Badge variant="outline" className="text-sm">
-                            {teacher.courses.length} courses assigned
-                          </Badge>
-                          {teacher.courses.length > 0 && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                              View your detailed schedule in the Schedules section
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Read-only notice */}
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
-                          <Clock className="h-4 w-4 inline mr-2" />
-                          This is a read-only view of your profile. Contact your administrator to update your skills or availability.
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : user.role === 'ADMIN' ? (
-                // Table view for admins
+                <div className="text-center py-4 text-gray-600 dark:text-gray-300">Loading teachers...</div>
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -404,7 +327,7 @@ export default function TeachersPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Skills</TableHead>
                       <TableHead>Courses</TableHead>
-                      <TableHead>Actions</TableHead>
+                      {user.role === 'ADMIN' && <TableHead>Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -426,35 +349,47 @@ export default function TeachersPage() {
                             {teacher.courses.length} courses
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(teacher)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDelete(teacher.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        {user.role === 'ADMIN' && (
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(teacher)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(teacher.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              ) : (
-                <div className="text-center py-8 text-gray-600 dark:text-gray-300">
-                  No teacher profile found
-                </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Read-only notice for teachers */}
+          {user.role === 'TEACHER' && (
+            <Card className="mt-6">
+              <CardContent className="p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <Clock className="h-4 w-4 inline mr-2" />
+                    You are viewing teacher information in read-only mode. Contact your administrator to update skills or availability.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             {/* Only show dialog if editingTeacher and user is ADMIN */}
