@@ -304,7 +304,7 @@ export default function TeachersPage() {
                 Teachers
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">
-                {user.role === 'ADMIN'
+                {user?.role === 'ADMIN'
                   ? 'Manage teacher skills and availability'
                   : 'View teacher information and course assignments'
                 }
@@ -320,14 +320,21 @@ export default function TeachersPage() {
               {loading ? (
                 <div className="text-center py-4 text-gray-600 dark:text-gray-300">Loading teachers...</div>
               ) : (
-                <Table>
+                <>
+                  {/* Debug info - remove this after testing */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mb-4 p-2 bg-yellow-100 dark:bg-yellow-900 text-xs">
+                      Debug: User role = "{user?.role}" | User ID = "{user?.id}" | Is Admin = {String(user?.role === 'ADMIN')}
+                    </div>
+                  )}
+                <Table key={user?.role}>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Skills</TableHead>
                       <TableHead>Courses</TableHead>
-                      {user.role === 'ADMIN' && <TableHead>Actions</TableHead>}
+                      {user?.role === 'ADMIN' ? <TableHead>Actions</TableHead> : null}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -349,7 +356,7 @@ export default function TeachersPage() {
                             {teacher.courses.length} courses
                           </Badge>
                         </TableCell>
-                        {user.role === 'ADMIN' && (
+                        {user?.role === 'ADMIN' ? (
                           <TableCell>
                             <div className="flex space-x-2">
                               <Button
@@ -368,17 +375,18 @@ export default function TeachersPage() {
                               </Button>
                             </div>
                           </TableCell>
-                        )}
+                        ) : null}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </>
               )}
             </CardContent>
           </Card>
 
           {/* Read-only notice for teachers */}
-          {user.role === 'TEACHER' && (
+          {user?.role === 'TEACHER' && (
             <Card className="mt-6">
               <CardContent className="p-4">
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
