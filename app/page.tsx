@@ -17,7 +17,8 @@ import {
   Clock,
   TrendingUp,
   Activity,
-  CheckCircle
+  CheckCircle,
+  CalendarPlus
 } from 'lucide-react';
 import { AnimatedCounter, AnimatedPercentage } from '@/components/ui/animated-counter';
 
@@ -179,6 +180,11 @@ export default function Home() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleManualSchedule = () => {
+    // Navigate to manual scheduling page
+    router.push('/schedules/manual');
   };
 
   if (!user) {
@@ -395,6 +401,14 @@ export default function Home() {
                     >
                       <Calendar className="h-6 w-6" />
                       <span>Generate Schedule</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex flex-col items-center justify-center space-y-2"
+                      onClick={handleManualSchedule}
+                    >
+                      <CalendarPlus className="h-6 w-6" />
+                      <span>Manual Schedule</span>
                     </Button>
                     <Button
                       variant="outline"

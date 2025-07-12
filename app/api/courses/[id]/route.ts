@@ -148,6 +148,86 @@ export async function DELETE(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getUserFromRequest(request);
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { schedule } = await request.json();
+    const courseId = params.id;
+
+    if (!schedule || !Array.isArray(schedule)) {
+      return NextResponse.json(
+        { error: 'Schedule must be an array of time slots' },
+        { status: 400 }
+      );
+    }
+
+    // Validate schedule format
+    for (const slot of schedule) {
+      if (!slot.day || !slot.time) {
+        return NextResponse.json(
+          { error: 'Each schedule slot must have day and time' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if course exists
+    const existingCourse = await prisma.course.findUnique({
+      where: { id: courseId }
+    });
+
+    if (!existingCourse) {
+      return NextResponse.json(
+        { error: 'Course not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update course schedule
+    const updatedCourse = await prisma.course.update({
+      where: { id: courseId },
+      data: {
+        schedule: schedule
+      },
+      include: {
+        subject: true,
+        teacher: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true
+              }
+            }
+          }
+        },
+        group: true,
+        room: true
+      }
+    });
+
+    return NextResponse.json(updatedCourse);
+
+  } catch (error) {
+    console.error('Update course schedule error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
