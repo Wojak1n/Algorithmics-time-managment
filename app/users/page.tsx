@@ -149,7 +149,12 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    const userToDelete = users.find(u => u.id === userId);
+    const confirmMessage = userToDelete?.role === 'TEACHER'
+      ? 'Are you sure you want to delete this teacher? Note: Teachers with assigned courses cannot be deleted.'
+      : 'Are you sure you want to delete this user? This action cannot be undone.';
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       const response = await fetch(`/api/users/${userId}`, {
@@ -167,9 +172,10 @@ export default function UsersPage() {
         });
         fetchUsers();
       } else {
+        const error = await response.json();
         toast({
           title: 'Error',
-          description: 'Failed to delete user',
+          description: error.error || 'Failed to delete user',
           variant: 'destructive',
         });
       }

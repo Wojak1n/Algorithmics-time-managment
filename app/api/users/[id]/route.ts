@@ -145,7 +145,44 @@ export async function DELETE(
       );
     }
 
-    // Delete user (cascade will handle related records)
+    // Handle deletion of related records based on user role
+    if (existingUser.role === 'TEACHER') {
+      // Find the teacher record
+      const teacher = await prisma.teacher.findUnique({
+        where: { userId },
+        include: {
+          courses: true,
+          skills: true
+        }
+      });
+
+      if (teacher) {
+        // Check if teacher has assigned courses
+        if (teacher.courses.length > 0) {
+          return NextResponse.json(
+            { error: `Cannot delete teacher. They are assigned to ${teacher.courses.length} course(s). Please reassign or delete the courses first.` },
+            { status: 400 }
+          );
+        }
+
+        // Delete teacher skills first
+        await prisma.teacherSkill.deleteMany({
+          where: { teacherId: teacher.id }
+        });
+
+        // Delete teacher record
+        await prisma.teacher.delete({
+          where: { id: teacher.id }
+        });
+      }
+    } else if (existingUser.role === 'STUDENT') {
+      // Delete student record if exists
+      await prisma.student.deleteMany({
+        where: { userId }
+      });
+    }
+
+    // Now delete the user
     await prisma.user.delete({
       where: { id: userId }
     });
