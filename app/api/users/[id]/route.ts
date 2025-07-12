@@ -146,48 +146,117 @@ export async function DELETE(
     }
 
     // Handle deletion of related records based on user role
-    if (existingUser.role === 'TEACHER') {
-      // Find the teacher record
-      const teacher = await prisma.teacher.findUnique({
-        where: { userId },
-        include: {
-          courses: true,
-          skills: true
-        }
-      });
+    console.log(`Attempting to delete user: ${existingUser.email}, Role: ${existingUser.role}`);
 
-      if (teacher) {
-        // Check if teacher has assigned courses
-        if (teacher.courses.length > 0) {
-          return NextResponse.json(
-            { error: `Cannot delete teacher. They are assigned to ${teacher.courses.length} course(s). Please reassign or delete the courses first.` },
-            { status: 400 }
-          );
+    try {
+      // Use a transaction to ensure all deletions succeed or fail together
+      await prisma.$transaction(async (tx) => {
+        if (existingUser.role === 'TEACHER') {
+          // Find the teacher record
+          const teacher = await tx.teacher.findUnique({
+            where: { userId },
+            include: {
+              courses: true,
+              skills: true
+            }
+          });
+
+          console.log(`Teacher record found:`, teacher ? 'Yes' : 'No');
+          if (teacher) {
+            console.log(`Teacher has ${teacher.courses.length} courses and ${teacher.skills.length} skills`);
+
+            // CASCADE DELETE: Delete all courses assigned to this teacher
+            if (teacher.courses.length > 0) {
+              console.log(`Cascade deleting ${teacher.courses.length} courses:`, teacher.courses.map(c => c.name));
+
+              // Delete all courses assigned to this teacher
+              await tx.course.deleteMany({
+                where: { teacherId: teacher.id }
+              });
+
+              console.log(`Successfully deleted ${teacher.courses.length} courses`);
+            }
+
+            // Delete teacher skills first
+            console.log(`Deleting ${teacher.skills.length} teacher skills...`);
+            await tx.teacherSkill.deleteMany({
+              where: { teacherId: teacher.id }
+            });
+
+            // Delete teacher record
+            console.log(`Deleting teacher record...`);
+            await tx.teacher.delete({
+              where: { id: teacher.id }
+            });
+          } else {
+            console.log(`No teacher record found for user with TEACHER role - checking for orphaned data`);
+
+            // Check for any courses that might reference this user indirectly
+            const orphanedCourses = await tx.course.findMany({
+              where: {
+                teacher: {
+                  userId: userId
+                }
+              }
+            });
+
+            if (orphanedCourses.length > 0) {
+              console.log(`Found ${orphanedCourses.length} orphaned courses, deleting...`);
+              await tx.course.deleteMany({
+                where: {
+                  teacher: {
+                    userId: userId
+                  }
+                }
+              });
+            }
+
+            // Check for any orphaned teacher skills that might reference this user indirectly
+            const orphanedSkills = await tx.teacherSkill.findMany({
+              where: {
+                teacher: {
+                  userId: userId
+                }
+              }
+            });
+
+            if (orphanedSkills.length > 0) {
+              console.log(`Found ${orphanedSkills.length} orphaned teacher skills, deleting...`);
+              await tx.teacherSkill.deleteMany({
+                where: {
+                  teacher: {
+                    userId: userId
+                  }
+                }
+              });
+            }
+          }
+        } else if (existingUser.role === 'STUDENT') {
+          // Delete student record if exists
+          console.log(`Deleting student records...`);
+          await tx.student.deleteMany({
+            where: { userId }
+          });
         }
 
-        // Delete teacher skills first
-        await prisma.teacherSkill.deleteMany({
-          where: { teacherId: teacher.id }
+        // Finally, delete the user
+        console.log(`Deleting user record...`);
+        await tx.user.delete({
+          where: { id: userId }
         });
 
-        // Delete teacher record
-        await prisma.teacher.delete({
-          where: { id: teacher.id }
-        });
-      }
-    } else if (existingUser.role === 'STUDENT') {
-      // Delete student record if exists
-      await prisma.student.deleteMany({
-        where: { userId }
+        console.log(`User and all related data deleted successfully`);
       });
+    } catch (transactionError) {
+      console.error(`Transaction failed:`, transactionError);
+
+
+
+      // For other errors, throw to be caught by outer catch
+      throw transactionError;
     }
 
-    // Now delete the user
-    await prisma.user.delete({
-      where: { id: userId }
-    });
-
-    return NextResponse.json({ message: 'User deleted successfully' });
+    return NextResponse.json({ message: 'User and all related data deleted successfully' });
 
   } catch (error) {
     console.error('Delete user error:', error);

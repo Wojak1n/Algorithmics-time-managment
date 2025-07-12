@@ -151,7 +151,7 @@ export default function UsersPage() {
   const handleDelete = async (userId: string) => {
     const userToDelete = users.find(u => u.id === userId);
     const confirmMessage = userToDelete?.role === 'TEACHER'
-      ? 'Are you sure you want to delete this teacher? Note: Teachers with assigned courses cannot be deleted.'
+      ? 'Are you sure you want to delete this teacher? WARNING: This will also delete all their assigned courses, schedules, and related data. This action cannot be undone.'
       : 'Are you sure you want to delete this user? This action cannot be undone.';
 
     if (!confirm(confirmMessage)) return;
@@ -168,7 +168,7 @@ export default function UsersPage() {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: 'User deleted successfully',
+          description: 'User and all related data deleted successfully',
         });
         fetchUsers();
       } else {
