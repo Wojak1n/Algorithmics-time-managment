@@ -33,7 +33,21 @@ interface Teacher {
       };
     };
   }[];
-  courses: any[];
+  courses: {
+    id: string;
+    name: string;
+    subject: {
+      name: string;
+      code: string;
+    };
+    group: {
+      name: string;
+    };
+    room: {
+      id: string;
+      name: string;
+    } | null;
+  }[];
 }
 
 interface Subject {
@@ -306,7 +320,7 @@ export default function TeachersPage() {
               <p className="text-gray-600 dark:text-gray-300 mt-2">
                 {user?.role === 'ADMIN'
                   ? 'Manage teacher skills and availability'
-                  : 'View teacher information and course assignments'
+                  : 'View teacher information, course assignments, and room allocations'
                 }
               </p>
             </div>
@@ -334,6 +348,7 @@ export default function TeachersPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Skills</TableHead>
                       <TableHead>Courses</TableHead>
+                      <TableHead>Rooms</TableHead>
                       {user?.role === 'ADMIN' ? <TableHead>Actions</TableHead> : null}
                     </TableRow>
                   </TableHeader>
@@ -355,6 +370,24 @@ export default function TeachersPage() {
                           <Badge variant="outline">
                             {teacher.courses.length} courses
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {teacher.courses.length > 0 ? (
+                              // Get unique rooms from all courses
+                              Array.from(new Set(
+                                teacher.courses
+                                  .filter(course => course.room)
+                                  .map(course => course.room!.name)
+                              )).map((roomName, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {roomName}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">No rooms assigned</span>
+                            )}
+                          </div>
                         </TableCell>
                         {user?.role === 'ADMIN' ? (
                           <TableCell>
@@ -392,7 +425,7 @@ export default function TeachersPage() {
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
                     <Clock className="h-4 w-4 inline mr-2" />
-                    You are viewing teacher information in read-only mode. Contact your administrator to update skills or availability.
+                    You are viewing teacher information in read-only mode. You can see all teachers' skills, courses, and room assignments. Contact your administrator to update skills or availability.
                   </p>
                 </div>
               </CardContent>
