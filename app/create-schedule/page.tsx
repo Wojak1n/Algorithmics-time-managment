@@ -11,6 +11,8 @@ import { Calendar, Clock, Save, Plus, Trash2 } from 'lucide-react';
 export default function CreateSchedulePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState('');
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [scheduleSlots, setScheduleSlots] = useState([]);
@@ -21,18 +23,70 @@ export default function CreateSchedulePage() {
   const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    // Check authentication
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (!storedToken || !storedUser) {
+      router.push('/login');
+      return;
+    }
+
+    setToken(storedToken);
+    setUser(JSON.parse(storedUser));
+  }, [router]);
+
+  useEffect(() => {
+    if (token && user) {
+      fetchCourses();
+    }
+  }, [token, user]);
 
   const fetchCourses = async () => {
+    if (!token) {
+      console.log('No token available');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/courses');
+      console.log('Fetching courses with token...');
+      const response = await fetch('/api/courses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Courses data:', data);
         setCourses(data);
+
+        if (data.length === 0) {
+          toast({
+            title: 'No Courses Found',
+            description: 'Please create some courses first before scheduling.',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        toast({
+          title: 'Error Loading Courses',
+          description: errorData.error || 'Failed to load courses',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error fetching courses:', error);
+      toast({
+        title: 'Network Error',
+        description: 'Failed to connect to the server',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -90,7 +144,10 @@ export default function CreateSchedulePage() {
     try {
       const response = await fetch('/api/schedules', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           courseId: selectedCourse,
           timeSlots: scheduleSlots,
@@ -123,7 +180,7 @@ export default function CreateSchedulePage() {
     }
   };
 
-  if (loading) {
+  if (loading || !user || !token) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
@@ -142,6 +199,46 @@ export default function CreateSchedulePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Debug Section - Remove in production */}
+            <div className="p-4 bg-gray-100 rounded-lg">
+              <h4 className="font-medium mb-2">Debug Info:</h4>
+              <p className="text-sm">Loading: {loading.toString()}</p>
+              <p className="text-sm">Courses count: {courses.length}</p>
+              <p className="text-sm">Selected course: {selectedCourse || 'None'}</p>
+              <div className="flex space-x-2 mt-2">
+                <Button size="sm" onClick={fetchCourses}>
+                  Refresh Courses
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  fetch('/api/courses', {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  })
+                    .then(res => res.json())
+                    .then(data => {
+                      console.log('Direct API test:', data);
+                      alert(`API Response: ${JSON.stringify(data, null, 2)}`);
+                    })
+                    .catch(err => {
+                      console.error('Direct API test error:', err);
+                      alert(`API Error: ${err.message}`);
+                    });
+                }}>
+                  Test API
+                </Button>
+              </div>
+              {courses.length > 0 && (
+                <details className="mt-2">
+                  <summary className="text-sm cursor-pointer">Raw courses data</summary>
+                  <pre className="text-xs mt-2 overflow-auto max-h-32">
+                    {JSON.stringify(courses, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+
             {/* Course Selection */}
             <div>
               <label className="block text-sm font-medium mb-2">Select Course</label>
@@ -150,16 +247,47 @@ export default function CreateSchedulePage() {
                   <SelectValue placeholder="Choose a course to schedule" />
                 </SelectTrigger>
                 <SelectContent>
-                  {courses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{course.name}</span>
-                        <span className="text-gray-500">- {course.subject?.name || 'Unknown Subject'}</span>
-                      </div>
+                  {courses.length > 0 ? (
+                    courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">{course.name}</span>
+                          <span className="text-gray-500">- {course.subject?.name || 'Unknown Subject'}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-courses" disabled>
+                      No courses available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
+
+              {/* Debug Info */}
+              <div className="mt-2 text-sm text-gray-600">
+                {loading ? (
+                  <span>Loading courses...</span>
+                ) : (
+                  <span>Found {courses.length} courses</span>
+                )}
+              </div>
+
+              {/* No Courses Message */}
+              {!loading && courses.length === 0 && (
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <div className="text-yellow-600">⚠️</div>
+                    <div>
+                      <p className="font-medium text-yellow-800">No Courses Available</p>
+                      <p className="text-sm text-yellow-700">
+                        You need to create courses before you can schedule them.
+                        <a href="/courses" className="underline ml-1">Go to Courses page</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Time Slots */}
