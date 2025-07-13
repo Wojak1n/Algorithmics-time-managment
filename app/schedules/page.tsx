@@ -352,23 +352,27 @@ export default function SchedulesPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/courses/${selectedCourse}`, {
-        method: 'PATCH',
+      const response = await fetch('/api/schedules/manual', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          schedule: scheduleSlots
+          courseId: selectedCourse,
+          timeSlots: scheduleSlots
         }),
       });
 
       if (response.ok) {
+        const result = await response.json();
         toast({
-          title: 'Success',
-          description: 'Schedule saved successfully',
+          title: 'Success! 🎉',
+          description: `Manual schedule created with ${scheduleSlots.length} time slots`,
         });
         setManualDialogOpen(false);
+        setSelectedCourse('');
+        setScheduleSlots([]);
         if (selectedId) {
           fetchSchedule();
         }
