@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,9 +54,11 @@ export default function SchedulesPage() {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [scheduleSlots, setScheduleSlots] = useState<{day: string; time: string}[]>([]);
   const [saving, setSaving] = useState(false);
+  const [openedFromQuickAction, setOpenedFromQuickAction] = useState(false);
 
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const timeSlots = [
     '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00',
@@ -79,6 +81,20 @@ export default function SchedulesPage() {
       return;
     }
   }, [router]);
+
+  // Check for manual schedule action parameter
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'manual' && user && user.role === 'ADMIN') {
+      // Small delay to ensure the component is fully loaded
+      setTimeout(() => {
+        setOpenedFromQuickAction(true);
+        openManualScheduleDialog();
+        // Clear the URL parameter
+        router.replace('/schedules', { scroll: false });
+      }, 500);
+    }
+  }, [searchParams, user, router]);
 
   useEffect(() => {
     if (user && token) {
@@ -373,6 +389,7 @@ export default function SchedulesPage() {
         setManualDialogOpen(false);
         setSelectedCourse('');
         setScheduleSlots([]);
+        setOpenedFromQuickAction(false);
         if (selectedId) {
           fetchSchedule();
         }
@@ -398,6 +415,10 @@ export default function SchedulesPage() {
   const openManualScheduleDialog = () => {
     fetchCourses();
     setManualDialogOpen(true);
+    // Reset the quick action flag if opened normally
+    if (!openedFromQuickAction) {
+      setOpenedFromQuickAction(false);
+    }
   };
 
   if (!user) {
@@ -611,10 +632,25 @@ export default function SchedulesPage() {
       </div>
 
       {/* Manual Schedule Dialog */}
-      <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+      <Dialog open={manualDialogOpen} onOpenChange={(open) => {
+        setManualDialogOpen(open);
+        if (!open) {
+          setOpenedFromQuickAction(false);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Manual Schedule Management</DialogTitle>
+            {openedFromQuickAction && (
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-blue-800 dark:text-blue-200">
+                    Welcome! Create a new schedule by selecting a course and configuring time slots.
+                  </span>
+                </div>
+              </div>
+            )}
           </DialogHeader>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

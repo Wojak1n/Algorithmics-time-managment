@@ -360,7 +360,7 @@ export default function Home() {
                   <>
                     <Button
                       className="h-20 flex flex-col items-center justify-center space-y-2"
-                      onClick={() => router.push('/create-schedule')}
+                      onClick={() => router.push('/schedules?action=manual')}
                     >
                       <Calendar className="h-6 w-6" />
                       <span>Create Schedule</span>
