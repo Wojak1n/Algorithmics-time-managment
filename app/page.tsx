@@ -146,40 +146,7 @@ export default function Home() {
     localStorage.removeItem('token');
   };
 
-  const handleGenerateSchedule = async () => {
-    try {
-      const response = await fetch('/api/schedule/generate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
 
-      if (response.ok) {
-        const result = await response.json();
-        toast({
-          title: 'Success',
-          description: `Schedule generated successfully! ${result.scheduledCourses} courses scheduled.`,
-        });
-        // Refresh stats
-        fetchStats();
-      } else {
-        const error = await response.json();
-        toast({
-          title: 'Error',
-          description: error.error || 'Failed to generate schedule',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Network error while generating schedule',
-        variant: 'destructive',
-      });
-    }
-  };
 
 
 
@@ -393,10 +360,10 @@ export default function Home() {
                   <>
                     <Button
                       className="h-20 flex flex-col items-center justify-center space-y-2"
-                      onClick={handleGenerateSchedule}
+                      onClick={() => router.push('/create-schedule')}
                     >
                       <Calendar className="h-6 w-6" />
-                      <span>Generate Schedule</span>
+                      <span>Create Schedule</span>
                     </Button>
                     <Button
                       variant="outline"
