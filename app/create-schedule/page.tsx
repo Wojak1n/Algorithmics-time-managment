@@ -202,10 +202,12 @@ export default function CreateSchedulePage() {
   };
 
   const getTimeSlotStatus = (day: string, time: string) => {
-    const hasConflict = conflicts.some(conflict =>
-      conflict.message.includes(day) && conflict.message.includes(time)
+    if (!day || !time) return { hasConflict: false, isExisting: false };
+
+    const hasConflict = conflicts.some((conflict: any) =>
+      conflict.message && conflict.message.includes(day) && conflict.message.includes(time)
     );
-    const isExisting = existingSchedules.some(schedule =>
+    const isExisting = existingSchedules.some((schedule: any) =>
       schedule.day === day && schedule.time === time
     );
 
@@ -360,15 +362,19 @@ export default function CreateSchedulePage() {
           {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center space-x-4">
-              {stepTitles.map((title, index) => (
+              {stepTitles.map((title, index) => {
+                const getStepClassName = () => {
+                  if (currentStep > index + 1) {
+                    return 'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 bg-green-500 border-green-500 text-white';
+                  } else if (currentStep === index + 1) {
+                    return 'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 bg-blue-500 border-blue-500 text-white';
+                  } else {
+                    return 'flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 bg-gray-100 border-gray-300 text-gray-400 dark:bg-gray-700 dark:border-gray-600';
+                  }
+                };
+                return (
                 <div key={index} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
-                    currentStep > index + 1
-                      ? 'bg-green-500 border-green-500 text-white'
-                      : currentStep === index + 1
-                        ? 'bg-blue-500 border-blue-500 text-white'
-                        : 'bg-gray-100 border-gray-300 text-gray-400 dark:bg-gray-700 dark:border-gray-600'
-                  }`}>
+                  <div className={getStepClassName()}>
                     {currentStep > index + 1 ? (
                       <CheckCircle className="h-5 w-5" />
                     ) : (
@@ -376,21 +382,22 @@ export default function CreateSchedulePage() {
                     )}
                   </div>
                   <div className="ml-3 text-sm">
-                    <p className={`font-medium ${
-                      currentStep >= index + 1
-                        ? 'text-gray-900 dark:text-gray-100'
-                        : 'text-gray-400 dark:text-gray-500'
-                    }`}>
+                    <p className={currentStep >= index + 1
+                        ? 'font-medium text-gray-900 dark:text-gray-100'
+                        : 'font-medium text-gray-400 dark:text-gray-500'
+                    }>
                       {title}
                     </p>
                   </div>
                   {index < stepTitles.length - 1 && (
-                    <div className={`w-12 h-0.5 mx-4 ${
-                      currentStep > index + 1 ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
-                    }`} />
+                    <div className={currentStep > index + 1
+                      ? 'w-12 h-0.5 mx-4 bg-green-500'
+                      : 'w-12 h-0.5 mx-4 bg-gray-300 dark:bg-gray-600'
+                    } />
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -579,14 +586,17 @@ export default function CreateSchedulePage() {
                     <div className="space-y-4">
                       {scheduleSlots.map((slot, index) => {
                         const status = getTimeSlotStatus(slot.day, slot.time);
+                        const getSlotClassName = () => {
+                          if (status.hasConflict) {
+                            return 'p-4 border-2 rounded-xl transition-all duration-200 border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20';
+                          } else if (status.isExisting) {
+                            return 'p-4 border-2 rounded-xl transition-all duration-200 border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/20';
+                          } else {
+                            return 'p-4 border-2 rounded-xl transition-all duration-200 border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700/50';
+                          }
+                        };
                         return (
-                          <div key={index} className={`p-4 border-2 rounded-xl transition-all duration-200 ${
-                            status.hasConflict
-                              ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20'
-                              : status.isExisting
-                                ? 'border-yellow-300 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-900/20'
-                                : 'border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700/50'
-                          }`}>
+                          <div key={index} className={getSlotClassName()}>
                             <div className="flex items-center space-x-4">
                               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
@@ -819,12 +829,15 @@ export default function CreateSchedulePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {scheduleSlots.map((slot, index) => {
                       const status = getTimeSlotStatus(slot.day, slot.time);
+                      const getReviewSlotClassName = () => {
+                        if (status.hasConflict) {
+                          return 'p-4 rounded-lg border-2 border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20';
+                        } else {
+                          return 'p-4 rounded-lg border-2 border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20';
+                        }
+                      };
                       return (
-                        <div key={index} className={`p-4 rounded-lg border-2 ${
-                          status.hasConflict
-                            ? 'border-red-300 bg-red-50 dark:border-red-600 dark:bg-red-900/20'
-                            : 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20'
-                        }`}>
+                        <div key={index} className={getReviewSlotClassName()}>
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-semibold text-gray-900 dark:text-gray-100">
